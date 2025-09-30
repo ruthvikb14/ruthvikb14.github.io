@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Canyon</title>
+  <style>
+    html,body{margin:0;height:100%;background:#000;overflow:hidden}
+    video{
+      position:fixed;inset:0;width:100%;height:100%;
+      object-fit:cover; /* fill the round screen nicely */
+      background:#000
+    }
+    /* optional: hide controls entirely */
+    .hidden-controls::-webkit-media-controls { display:none !important; }
+    .hint{
+      position:fixed;left:0;right:0;bottom:6%;
+      text-align:center;font:600 12px system-ui, sans-serif;color:#fff;opacity:.6
+    }
+  </style>
+</head>
+<body>
+  <!-- Autoplay on mobile/watch requires muted -->
+  <video id="v" class="hidden-controls" src="canyon.mp4"
+         autoplay muted loop playsinline preload="auto"></video>
+  <div class="hint">tap once to unmute</div>
+
+  <script>
+    const v = document.getElementById('v');
+
+    // Try to keep screen awake while the page is visible
+    let wakeLock;
+    async function requestWakeLock(){
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await navigator.wakeLock.request('screen');
+          wakeLock.addEventListener('release',()=>{ /* no-op */ });
+          document.addEventListener('visibilitychange',()=>{
+            if (document.visibilityState === 'visible') requestWakeLock();
+          });
+        }
+      } catch(e){ /* ignored */ }
+    }
+    requestWakeLock();
+
+    // Allow user to unmute with one tap (autoplay policies)
+    document.addEventListener('click', () => {
+      if (v.muted) { v.muted = false; v.play().catch(()=>{}); }
+    }, { once:true });
+
+    // Resume if the browser ever pauses the video
+    v.addEventListener('pause', () => v.play().catch(()=>{}));
+  </script>
+</body>
+</html>
